@@ -102,7 +102,7 @@
       signInWithEmailAndPassword(auth, email, password)
         .then(() => {
           alert("Login Success ✅");
-          window.location.replace("student-dashboard.html");
+         window.location.href = "dashboard.html";
         })
         .catch((error) => {
           alert(error.message);
