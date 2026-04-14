@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Portal - Elevate</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <nav>
+    <a href="index.html" class="logo">
+      <i class="ph ph-graduation-cap"></i> Elevate
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="student.html">Student Dashboard</a></li>
+      <li><a href="teacher.html" class="active">Teacher Portal</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h2><span class="text-gradient">Teacher Management Portal</span></h2>
+      <div class="badge badge-violet">Instructor Access</div>
+    </div>
+
+    <div class="grid">
+      <!-- Create Course Form -->
+      <div class="glass-card">
+        <h3><i class="ph ph-folder-plus" style="color: var(--primary); vertical-align: middle;"></i> Custom Section</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Create a new class section for students.</p>
+        
+        <form id="create-course-form">
+          <div class="form-group">
+            <label>Course Title</label>
+            <input type="text" id="c-title" class="form-control" required placeholder="e.g. Intro to Physics">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" id="c-cat" class="form-control" required placeholder="e.g. Science">
+          </div>
+          <div class="form-group">
+            <label>Instructor Name</label>
+            <input type="text" id="c-instructor" class="form-control" required placeholder="e.g. Dr. Roberts">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="c-desc" class="form-control" rows="3" required placeholder="Brief course description..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Create Course</button>
+        </form>
+      </div>
+
+      <!-- Upload Material Form -->
+      <div class="glass-card">
+        <h3><i class="ph ph-upload-simple" style="color: var(--secondary); vertical-align: middle;"></i> Upload Material</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Upload syllabus or PDF notes to an existing section.</p>
+
+        <form id="upload-material-form">
+          <div class="form-group">
+            <label>Select Section</label>
+            <select id="m-course" class="form-control" required>
+              <!-- Options populated by JS -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Document Title</label>
+            <input type="text" id="m-title" class="form-control" required placeholder="e.g. Chapter 1 Notes">
+          </div>
+          <div class="form-group">
+            <label>Upload File (PDF)</label>
+            <input type="file" id="m-file" class="form-control" accept=".pdf" required>
+          </div>
+          <button type="submit" class="btn btn-outline" style="width: 100%; justify-content: center; border-color: var(--secondary); color: var(--secondary);">Upload Document</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      populateCourseSelect();
+
+      // Form Submit: Create Course
+      document.getElementById('create-course-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('c-title').value;
+        const cat = document.getElementById('c-cat').value;
+        const instructor = document.getElementById('c-instructor').value;
+        const desc = document.getElementById('c-desc').value;
+
+        addCourse(title, desc, instructor, cat);
+        showToast('Course created successfully!');
+        e.target.reset();
+        populateCourseSelect(); // update the dropdown
+      });
+
+      // Form Submit: Upload Material
+      document.getElementById('upload-material-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const courseId = document.getElementById('m-course').value;
+        const title = document.getElementById('m-title').value;
+        const fileInput = document.getElementById('m-file');
+
+        if (!courseId) {
+          showToast('Please select a course first. If none exist, create one!');
+          return;
+        }
+
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          // Mock file size calculation
+          const sizeMB = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+          
+          addMaterial(courseId, title, file.type, sizeMB);
+          showToast(`Successfully uploaded ${title} to course!`);
+          e.target.reset();
+        }
+      });
+    });
+
+    function populateCourseSelect() {
+      const courses = getCourses();
+      const select = document.getElementById('m-course');
+      select.innerHTML = '';
+      
+      if (courses.length === 0) {
+        select.innerHTML = '<option value="" disabled selected>No courses available</option>';
+        return;
+      }
+
+      courses.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.innerText = c.title;
+        select.appendChild(opt);
+      });
+    }
+  </script>
+</body>
+</html>
