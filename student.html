@@ -1,124 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard - Elevate</title>
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <title>Student Login</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: linear-gradient(135deg, #1e1e2f, #3a0ca3);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      width: 300px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #7209b7;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #560bad;
+    }
+  </style>
 </head>
+
 <body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
 
-  <nav>
-    <a href="index.html" class="logo">
-      <i class="ph ph-graduation-cap"></i> Elevate
-    </a>
-    <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="student.html" class="active">Student Dashboard</a></li>
-      <li><a href="teacher.html">Teacher Portal</a></li>
-    </ul>
-  </nav>
+  <div class="login-box">
+    <h2>Student Login</h2>
 
-  <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-      <h2><span class="text-gradient">My Courses</span></h2>
-      <div class="badge badge-blue">Student View</div>
-    </div>
+    <input type="email" id="email" placeholder="Enter email">
+    <input type="password" id="password" placeholder="Enter password">
 
-    <div class="grid" id="course-list">
-      <!-- Courses will be injected here by JS -->
-    </div>
+    <button onclick="login()">Login</button>
+    <button onclick="signup()">Signup</button>
   </div>
 
-  <!-- Modal for Materials -->
-  <div class="modal" id="materials-modal">
-    <div class="glass-card" style="width: 100%; max-width: 600px; position: relative;">
-      <button class="close-modal" id="close-modal"><i class="ph ph-x"></i></button>
-      <h3 id="modal-course-title" style="margin-bottom: 0.5rem;">Course Title</h3>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Available Study Materials</p>
-      
-      <div id="materials-list" style="max-height: 400px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px;">
-        <!-- Materials will be injected here -->
-      </div>
-    </div>
-  </div>
+  <!-- 🔥 Firebase + Auth -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-  <script src="assets/js/app.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      renderCourses();
+    const firebaseConfig = {
+      apiKey: "AIzaSyCFS-bKBf1dyveUJd8pfCNIVVKNUeagaYA",
+      authDomain: "elerning-app-e00c6.firebaseapp.com",
+      projectId: "elerning-app-e00c6",
+      storageBucket: "elerning-app-e00c6.firebasestorage.app",
+      messagingSenderId: "367800679797",
+      appId: "1:367800679797:web:76cb276c2dd4dd3581673c"
+    };
 
-      document.getElementById('close-modal').addEventListener('click', () => {
-        document.getElementById('materials-modal').classList.remove('active');
-      });
-    });
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-    function renderCourses() {
-      const courses = getCourses();
-      const container = document.getElementById('course-list');
-      container.innerHTML = '';
+    // Signup
+    window.signup = function () {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
-      if (courses.length === 0) {
-        container.innerHTML = `<p style="color: var(--text-muted);">No courses available. Check back soon!</p>`;
-        return;
-      }
-
-      courses.forEach(course => {
-        const card = document.createElement('div');
-        card.className = 'glass-card';
-        card.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-            <span class="badge ${course.category === 'Computer Science' ? 'badge-blue' : 'badge-violet'}">${course.category}</span>
-            <i class="ph ph-bookmark-simple" style="font-size: 1.5rem; color: var(--text-muted);"></i>
-          </div>
-          <h3 style="margin-bottom: 0.5rem;">${course.title}</h3>
-          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">${course.description}</p>
-          <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 1.5rem;">
-            <i class="ph ph-user"></i> ${course.instructor}
-          </div>
-          <button class="btn btn-outline" style="width: 100%; justify-content: center;" onclick="openMaterials('${course.id}')">
-            View Syllabus & Notes (${course.materials.length})
-          </button>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function openMaterials(courseId) {
-      const courses = getCourses();
-      const course = courses.find(c => c.id === courseId);
-      if (!course) return;
-
-      document.getElementById('modal-course-title').innerText = course.title;
-      const materialsList = document.getElementById('materials-list');
-      materialsList.innerHTML = '';
-
-      if (course.materials.length === 0) {
-        materialsList.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">No notes uploaded yet.</div>`;
-      } else {
-        course.materials.forEach(mat => {
-          materialsList.innerHTML += `
-            <div class="list-item">
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <i class="ph ph-file-pdf" style="font-size: 2rem; color: var(--accent);"></i>
-                <div>
-                  <h4 style="font-size: 1rem; margin: 0;">${mat.title}</h4>
-                  <small style="color: var(--text-muted);">${mat.size} • Uploaded ${mat.date}</small>
-                </div>
-              </div>
-              <button class="btn btn-primary" style="padding: 0.5rem; border-radius: 8px;" onclick="showToast('Downloading ${mat.title} mock file...')">
-                <i class="ph ph-download-simple"></i>
-              </button>
-            </div>
-          `;
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          alert("Signup Success ✅");
+        })
+        .catch((error) => {
+          alert(error.message);
         });
-      }
+    };
 
-      document.getElementById('materials-modal').classList.add('active');
-    }
+    // Login
+    window.login = function () {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          alert("Login Success ✅");
+          window.location.href = "index.html";
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    };
   </script>
+
 </body>
+
 </html>
