@@ -1,40 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Student Dashboard</title>
+<meta charset="UTF-8">
+<title>Student Dashboard</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg,#1e1e2f,#3a0ca3);
+  color: white;
+}
+
+header {
+  padding: 20px;
+  text-align: center;
+  background: rgba(255,255,255,0.1);
+}
+
+.container {
+  padding: 20px;
+}
+
+select {
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+}
+
+.card {
+  background: rgba(255,255,255,0.1);
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+
+button {
+  padding: 8px 12px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.view { background: #4cc9f0; }
+.download { background: #7209b7; color:white; }
+.logout { background: red; color:white; }
+
+iframe {
+  width: 100%;
+  height: 400px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+</style>
 </head>
 
 <body>
 
-<h2>📚 Student Dashboard</h2>
+<header>
+  <h2>📚 Student Dashboard</h2>
+  <p id="username">Welcome 👋</p>
+  <button class="logout" onclick="logout()">Logout</button>
+</header>
 
-<button onclick="logout()">Logout</button>
-
-<hr>
+<div class="container">
 
 <h3>Select Course</h3>
 <select id="course-select"></select>
 
-<hr>
-
 <h3>Materials</h3>
 <div id="materials"></div>
 
+<h3>📄 PDF Preview</h3>
+<iframe id="viewer" src=""></iframe>
+
+</div>
+
 <script type="module">
 
-// 🔥 Firebase Auth
+// 🔥 Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // 🔥 Supabase
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCFS-bKBf1dyveUJd8pfCNIVVKNUeagaYA",
   authDomain: "elerning-app-e00c6.firebaseapp.com",
@@ -44,16 +96,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Supabase
 const supabaseClient = createClient(
   "https://iuhlwmsbmdhawavbsxes.supabase.co",
   "sb_publishable_4lVVKhZpkOsNL14HB4Yd2w_YNlMl8EX"
 );
 
-// 🔐 Protect page
+// 🔐 Protect + username
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.replace("index.html");
+  } else {
+    document.getElementById("username").innerText =
+      "Welcome " + user.email;
   }
 });
 
@@ -64,7 +118,7 @@ window.logout = function () {
   });
 };
 
-// 🔥 Load courses
+// 🔥 Load Courses
 async function loadCourses() {
   const { data } = await supabaseClient.from('courses').select('*');
 
@@ -79,7 +133,7 @@ async function loadCourses() {
   });
 }
 
-// 🔥 Load materials
+// 🔥 Load Materials
 async function loadMaterials(courseId) {
   const { data } = await supabaseClient
     .from('materials')
@@ -90,27 +144,24 @@ async function loadMaterials(courseId) {
   container.innerHTML = '';
 
   if (!data || data.length === 0) {
-    container.innerHTML = "No materials found ❌";
+    container.innerHTML = "No materials ❌";
     return;
   }
 
   data.forEach(m => {
     const div = document.createElement('div');
+    div.className = "card";
 
     div.innerHTML = `
-      <p><b>${m.title}</b></p>
+      <h4>${m.title}</h4>
 
-      <a href="${m.file_url}" target="_blank">
+      <button class="view" onclick="viewPDF('${m.file_url}')">
         👁 View
-      </a>
-
-      <br>
+      </button>
 
       <a href="${m.file_url}" download>
-        ⬇ Download
+        <button class="download">⬇ Download</button>
       </a>
-
-      <hr>
     `;
 
     container.appendChild(div);
@@ -119,11 +170,13 @@ async function loadMaterials(courseId) {
 
 // 🎯 Course change
 document.getElementById('course-select').addEventListener('change', (e) => {
-  const courseId = e.target.value;
-  if (courseId) {
-    loadMaterials(courseId);
-  }
+  loadMaterials(e.target.value);
 });
+
+// 🔥 PDF Viewer
+window.viewPDF = function(url) {
+  document.getElementById('viewer').src = url;
+};
 
 // 🚀 Start
 loadCourses();
