@@ -21,13 +21,14 @@
 
 <h2>Upload Material</h2>
 <form id="upload-material-form">
-  <select id="m-course"></select>
+  <select id="m-course">
+    <option value="">Select Course</option>
+  </select>
   <input type="text" id="m-title" placeholder="File Title" required>
   <input type="file" id="m-file" required>
   <button type="submit">Upload</button>
 </form>
 
-<!-- ✅ Correct Supabase v2 -->
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
@@ -43,16 +44,11 @@ async function loadCourses() {
     .select('*');
 
   const select = document.getElementById('m-course');
-  select.innerHTML = '';
+  select.innerHTML = '<option value="">Select Course</option>';
 
   if (error) {
     console.error(error);
     alert("Courses load error");
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    select.innerHTML = '<option>No courses</option>';
     return;
   }
 
@@ -83,70 +79,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (error) {
       console.error(error);
-      alert("❌ Course create failed");
+      alert("❌ Course create failed: " + error.message);
       return;
     }
 
     alert("✅ Course created");
     e.target.reset();
-
-    await loadCourses(); // 🔥 important
+    loadCourses();
   });
 
   // ✅ Upload file
   document.getElementById('upload-material-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  alert("Upload button clicked 🚀"); // 👈 ADD THIS
-  const courseId = document.getElementById('m-course').value;
-  const title = document.getElementById('m-title').value;
-  const file = document.getElementById('m-file').files[0];
+    const courseId = document.getElementById('m-course').value;
+    const title = document.getElementById('m-title').value;
+    const file = document.getElementById('m-file').files[0];
 
-  console.log(courseId, title, file); // 🔥 debug
+    console.log(courseId, title, file);
 
-  if (!courseId) {
-    alert("Course select kar ❌");
-    return;
-  }
+    if (!courseId) {
+      alert("Course select kar ❌");
+      return;
+    }
 
-  if (!file) {
-    alert("File select kar ❌");
-    return;
-  }
+    if (!file) {
+      alert("File select kar ❌");
+      return;
+    }
 
-  const filePath = "uploads/" + Date.now() + "_" + file.name;
+    try {
+      const filePath = `uploads/${Date.now()}_${file.name}`;
 
-  const { error: uploadError } = await supabaseClient.storage
-    .from("uploads")
-    .upload(filePath, file);
+      const { error: uploadError } = await supabaseClient.storage
+        .from("uploads")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: file.type
+        });
 
-  if (uploadError) {
-    console.error(uploadError);
-    alert("❌ Upload failed: " + uploadError.message);
-    return;
-  }
+      if (uploadError) {
+        console.error(uploadError);
+        alert("❌ Upload failed: " + uploadError.message);
+        return;
+      }
 
-  const { data } = supabaseClient.storage
-    .from("uploads")
-    .getPublicUrl(filePath);
+      const { data } = supabaseClient.storage
+        .from("uploads")
+        .getPublicUrl(filePath);
 
-  const fileURL = data.publicUrl;
+      const fileURL = data.publicUrl;
 
-  const { error: dbError } = await supabaseClient
-    .from('materials')
-    .insert([
-      { course_id: courseId, title, file_url: fileURL }
-    ]);
+      const { error: dbError } = await supabaseClient
+        .from('materials')
+        .insert([
+          { course_id: courseId, title, file_url: fileURL }
+        ]);
 
-  if (dbError) {
-    console.error(dbError);
-    alert("DB save failed: " + dbError.message);
-    return;
-  }
+      if (dbError) {
+        console.error(dbError);
+        alert("❌ DB save failed: " + dbError.message);
+        return;
+      }
 
-  alert("🚀 Upload successful");
-  e.target.reset();
-});
+      alert("🚀 Upload successful");
+      e.target.reset();
+
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong ❌");
+    }
+  });
 
 });
 </script>
