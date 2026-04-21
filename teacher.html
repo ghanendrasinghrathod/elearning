@@ -39,15 +39,12 @@ const supabaseClient = createClient(
 
 // 🔥 Load courses
 async function loadCourses() {
-  const { data, error } = await supabaseClient
-    .from('courses')
-    .select('*');
+  const { data, error } = await supabaseClient.from('courses').select('*');
 
   const select = document.getElementById('m-course');
   select.innerHTML = '<option value="">Select Course</option>';
 
   if (error) {
-    console.error(error);
     alert("Courses load error");
     return;
   }
@@ -68,17 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('create-course-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const title = document.getElementById('c-title').value;
-    const cat = document.getElementById('c-cat').value;
-    const instructor = document.getElementById('c-instructor').value;
-    const desc = document.getElementById('c-desc').value;
+    const title = c-title.value;
+    const cat = c-cat.value;
+    const instructor = c-instructor.value;
+    const desc = c-desc.value;
 
     const { error } = await supabaseClient
       .from('courses')
       .insert([{ title, category: cat, instructor, description: desc }]);
 
     if (error) {
-      console.error(error);
       alert("❌ Course create failed: " + error.message);
       return;
     }
@@ -96,8 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = document.getElementById('m-title').value;
     const file = document.getElementById('m-file').files[0];
 
-    console.log("DATA:", courseId, title, file);
-
     if (!courseId) {
       alert("Course select kar ❌");
       return;
@@ -111,29 +105,25 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const filePath = `${Date.now()}_${file.name}`;
 
-      const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      console.log("Uploading...");
+
+      const { data, error } = await supabaseClient.storage
         .from("uploads")
         .upload(filePath, file, {
-          cacheControl: "3600",
           upsert: true,
-          contentType: "application/octet-stream"
+          contentType: file.type || "application/octet-stream"
         });
 
-      console.log("UPLOAD RESULT:", uploadData, uploadError);
-
-      if (uploadError) {
-        alert("❌ Upload failed: " + uploadError.message);
-        console.error(uploadError);
+      if (error) {
+        alert("❌ Upload failed: " + error.message);
         return;
       }
 
-      const { data: publicData } = supabaseClient.storage
+      const { data: publicUrlData } = supabaseClient.storage
         .from("uploads")
         .getPublicUrl(filePath);
 
-      const fileURL = publicData.publicUrl;
-
-      console.log("FILE URL:", fileURL);
+      const fileURL = publicUrlData.publicUrl;
 
       const { error: dbError } = await supabaseClient
         .from('materials')
@@ -142,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ]);
 
       if (dbError) {
-        console.error(dbError);
         alert("❌ DB save failed: " + dbError.message);
         return;
       }
@@ -151,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.target.reset();
 
     } catch (err) {
-      console.error("CATCH ERROR:", err);
+      console.error(err);
       alert("Something went wrong ❌");
     }
   });
