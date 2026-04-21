@@ -70,21 +70,16 @@
 
 
   <!-- Firebase START -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCFS-bKBf1dyveUJd8pfCNIVVKNUeagaYA",
-      authDomain: "elerning-app-e00c6.firebaseapp.com",
-      projectId: "elerning-app-e00c6",
-      storageBucket: "elerning-app-e00c6.firebasestorage.app",
-      messagingSenderId: "367800679797",
-      appId: "1:367800679797:web:76cb276c2dd4dd3581673c"
-    };
+<script>
+const supabase = supabase.createClient(
+  "https://YOUR_PROJECT_ID.supabase.co",
+  "sb_publishable_XXXXX"
+);
 
-    const app = initializeApp(firebaseConfig);
-    console.log("Firebase Connected ✅");
-  </script>
+console.log("Supabase Connected ✅");
+</script>
   <!-- Firebase END -->
 
 </body>
