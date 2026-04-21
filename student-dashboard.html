@@ -50,10 +50,12 @@ const supabaseClient = createClient(
   "sb_publishable_4lVVKhZpkOsNL14HB4Yd2w_YNlMl8EX"
 );
 
-// 🔐 Protect page
+// 🔐 Protect page + LOAD DATA AFTER LOGIN
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.replace("index.html");
+  } else {
+    loadCourses(); // 🔥 IMPORTANT FIX
   }
 });
 
@@ -66,10 +68,21 @@ window.logout = function () {
 
 // 🔥 Load courses
 async function loadCourses() {
-  const { data } = await supabaseClient.from('courses').select('*');
+  const { data, error } = await supabaseClient.from('courses').select('*');
+
+  if (error) {
+    console.error("Courses error:", error);
+    alert("Courses load error ❌");
+    return;
+  }
 
   const select = document.getElementById('course-select');
   select.innerHTML = '<option value="">Select Course</option>';
+
+  if (!data || data.length === 0) {
+    select.innerHTML += '<option>No courses</option>';
+    return;
+  }
 
   data.forEach(c => {
     const opt = document.createElement('option');
@@ -81,13 +94,19 @@ async function loadCourses() {
 
 // 🔥 Load materials
 async function loadMaterials(courseId) {
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from('materials')
     .select('*')
     .eq('course_id', courseId);
 
   const container = document.getElementById('materials');
   container.innerHTML = '';
+
+  if (error) {
+    console.error("Materials error:", error);
+    container.innerHTML = "Error loading materials ❌";
+    return;
+  }
 
   if (!data || data.length === 0) {
     container.innerHTML = "No materials ❌";
@@ -113,11 +132,12 @@ async function loadMaterials(courseId) {
 // 🎯 Course change
 document.getElementById('course-select').addEventListener('change', (e) => {
   const courseId = e.target.value;
-  if (courseId) loadMaterials(courseId);
+  if (courseId) {
+    loadMaterials(courseId);
+  } else {
+    document.getElementById('materials').innerHTML = "";
+  }
 });
-
-// 🚀 Start
-loadCourses();
 
 </script>
 
