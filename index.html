@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Elevate - E-Learning Platform</title>
+
   <link rel="stylesheet" href="assets/css/styles.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
@@ -20,9 +21,10 @@
     <a href="index.html" class="logo">
       <i class="ph ph-graduation-cap"></i> Elevate
     </a>
+
     <ul class="nav-links">
       <li><a href="index.html" class="active">Home</a></li>
-      <li><a href="student-dashboard.html">Student Dashboard</a></li>
+      <li><a href="login.html">Student Dashboard</a></li>
       <li><a href="teacher.html">Teacher Portal</a></li>
     </ul>
   </nav>
@@ -33,13 +35,16 @@
     <p>Access high-quality study materials, syllabus files, and interactive courses.</p>
 
     <div class="hero-btns">
-      <a href="student-dashboard.html" class="btn btn-primary">
+
+      <!-- ✅ Student goes to login -->
+      <a href="login.html" class="btn btn-primary">
         I am a Student <i class="ph ph-arrow-right"></i>
       </a>
 
       <a href="teacher.html" class="btn btn-outline">
         I am a Teacher
       </a>
+
     </div>
   </header>
 
@@ -70,36 +75,15 @@
     </div>
   </section>
 
-  <!-- Supabase -->
+  <!-- Supabase (optional, not needed here but safe) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
     const supabaseClient = window.supabase.createClient(
       "https://iuhlwmsbmdhawavbsxes.supabase.co",
       "sb_publishable_4lVVKhZpkOsNL14HB4Yd2w_YNlMl8EX"
     );
+
     console.log("Supabase Connected ✅");
-  </script>
-
-  <!-- 🔥 Firebase Auth Auto Redirect -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCFS-bKBf1dyveUJd8pfCNIVVKNUeagaYA",
-      authDomain: "elerning-app-e00c6.firebaseapp.com",
-      projectId: "elerning-app-e00c6",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    // 🔥 Auto redirect if already logged in
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.replace("student-dashboard.html");
-      }
-    });
   </script>
 
 </body>
