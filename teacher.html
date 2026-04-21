@@ -27,21 +27,29 @@
   <button type="submit">Upload</button>
 </form>
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<!-- ✅ Correct Supabase v2 -->
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-<script>
-const supabaseClient = window.supabase.createClient(
+const supabaseClient = createClient(
   "https://iuhlwmsbmdhawavbsxes.supabase.co",
   "sb_publishable_HLC_52FAnlzjCrsPiXNiKA_zCLMehLn"
 );
 
 // 🔥 Load courses
 async function loadCourses() {
-  const { data } = await supabaseClient.from('courses').select('*');
+  const { data, error } = await supabaseClient
+    .from('courses')
+    .select('*');
 
   const select = document.getElementById('m-course');
   select.innerHTML = '';
+
+  if (error) {
+    console.error(error);
+    alert("Courses load error");
+    return;
+  }
 
   if (!data || data.length === 0) {
     select.innerHTML = '<option>No courses</option>';
@@ -51,7 +59,7 @@ async function loadCourses() {
   data.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c.id;
-    opt.innerText = c.title;
+    opt.textContent = c.title;
     select.appendChild(opt);
   });
 }
@@ -74,13 +82,15 @@ document.addEventListener('DOMContentLoaded', () => {
       .insert([{ title, category: cat, instructor, description: desc }]);
 
     if (error) {
+      console.error(error);
       alert("❌ Course create failed");
       return;
     }
 
     alert("✅ Course created");
     e.target.reset();
-    loadCourses();
+
+    await loadCourses(); // 🔥 important
   });
 
   // ✅ Upload file
@@ -99,16 +109,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const filePath = "uploads/" + Date.now() + "_" + file.name;
 
     // Upload file
-    const { error } = await supabaseClient.storage
+    const { error: uploadError } = await supabaseClient.storage
       .from("uploads")
       .upload(filePath, file);
 
-    if (error) {
+    if (uploadError) {
+      console.error(uploadError);
       alert("❌ Upload failed");
       return;
     }
 
-    // Get URL
+    // Get public URL
     const { data } = supabaseClient.storage
       .from("uploads")
       .getPublicUrl(filePath);
@@ -116,9 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileURL = data.publicUrl;
 
     // Save in DB
-    await supabaseClient.from('materials').insert([
-      { course_id: courseId, title, file_url: fileURL }
-    ]);
+    const { error: dbError } = await supabaseClient
+      .from('materials')
+      .insert([
+        { course_id: courseId, title, file_url: fileURL }
+      ]);
+
+    if (dbError) {
+      console.error(dbError);
+      alert("DB save failed");
+      return;
+    }
 
     alert("🚀 Upload successful");
     e.target.reset();
