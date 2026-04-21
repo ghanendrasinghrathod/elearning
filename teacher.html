@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = document.getElementById('m-title').value;
     const file = document.getElementById('m-file').files[0];
 
-    console.log(courseId, title, file);
+    console.log("DATA:", courseId, title, file);
 
     if (!courseId) {
       alert("Course select kar ❌");
@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const filePath = `uploads/${Date.now()}_${file.name}`;
 
-      const { error: uploadError } = await supabaseClient.storage
+      // 🔥 FULL DEBUG UPLOAD
+      const { data: uploadData, error: uploadError } = await supabaseClient.storage
         .from("uploads")
         .upload(filePath, file, {
           cacheControl: "3600",
@@ -119,17 +120,21 @@ document.addEventListener('DOMContentLoaded', () => {
           contentType: file.type
         });
 
+      console.log("UPLOAD RESULT:", uploadData, uploadError);
+
       if (uploadError) {
-        console.error(uploadError);
         alert("❌ Upload failed: " + uploadError.message);
+        console.error(uploadError);
         return;
       }
 
-      const { data } = supabaseClient.storage
+      const { data: publicData } = supabaseClient.storage
         .from("uploads")
         .getPublicUrl(filePath);
 
-      const fileURL = data.publicUrl;
+      const fileURL = publicData.publicUrl;
+
+      console.log("FILE URL:", fileURL);
 
       const { error: dbError } = await supabaseClient
         .from('materials')
@@ -147,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.target.reset();
 
     } catch (err) {
-      console.error(err);
+      console.error("CATCH ERROR:", err);
       alert("Something went wrong ❌");
     }
   });
