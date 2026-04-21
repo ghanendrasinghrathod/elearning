@@ -1,176 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher Portal - Elevate</title>
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <title>Teacher Portal</title>
 </head>
 
 <body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
 
-  <nav>
-    <a href="index.html" class="logo">
-      <i class="ph ph-graduation-cap"></i> Elevate
-    </a>
-    <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="student.html">Student Dashboard</a></li>
-      <li><a href="teacher.html" class="active">Teacher Portal</a></li>
-    </ul>
-  </nav>
+<h2>Create Course</h2>
+<form id="create-course-form">
+  <input type="text" id="c-title" placeholder="Course Title" required>
+  <input type="text" id="c-cat" placeholder="Category" required>
+  <input type="text" id="c-instructor" placeholder="Instructor" required>
+  <textarea id="c-desc" placeholder="Description"></textarea>
+  <button type="submit">Create Course</button>
+</form>
 
-  <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-      <h2><span class="text-gradient">Teacher Management Portal</span></h2>
-      <div class="badge badge-violet">Instructor Access</div>
-    </div>
+<hr>
 
-    <div class="grid">
-      <!-- Create Course Form -->
-      <div class="glass-card">
-        <h3><i class="ph ph-folder-plus" style="color: var(--primary); vertical-align: middle;"></i> Custom Section</h3>
-        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Create a new class section for
-          students.</p>
+<h2>Upload Material</h2>
+<form id="upload-material-form">
+  <select id="m-course"></select>
+  <input type="text" id="m-title" placeholder="File Title" required>
+  <input type="file" id="m-file" required>
+  <button type="submit">Upload</button>
+</form>
 
-        <form id="create-course-form">
-          <div class="form-group">
-            <label>Course Title</label>
-            <input type="text" id="c-title" class="form-control" required placeholder="e.g. Intro to Physics">
-          </div>
-          <div class="form-group">
-            <label>Category</label>
-            <input type="text" id="c-cat" class="form-control" required placeholder="e.g. Science">
-          </div>
-          <div class="form-group">
-            <label>Instructor Name</label>
-            <input type="text" id="c-instructor" class="form-control" required placeholder="e.g. Dr. Roberts">
-          </div>
-          <div class="form-group">
-            <label>Description</label>
-            <textarea id="c-desc" class="form-control" rows="3" required
-              placeholder="Brief course description..."></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Create
-            Course</button>
-        </form>
-      </div>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-      <!-- Upload Material Form -->
-      <div class="glass-card">
-        <h3><i class="ph ph-upload-simple" style="color: var(--secondary); vertical-align: middle;"></i> Upload Material
-        </h3>
-        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Upload syllabus or PDF notes to
-          an existing section.</p>
+<script>
+const supabaseClient = window.supabase.createClient(
+  "https://iuhlwmsbmdhawavbsxes.supabase.co",
+  "sb_publishable_HLC_52FAnlzjCrsPiXNiKA_zCLMehLn"
+);
 
-        <form id="upload-material-form">
-          <div class="form-group">
-            <label>Select Section</label>
-            <select id="m-course" class="form-control" required>
-              <!-- Options populated by JS -->
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Document Title</label>
-            <input type="text" id="m-title" class="form-control" required placeholder="e.g. Chapter 1 Notes">
-          </div>
-          <div class="form-group">
-            <label>Upload File (PDF)</label>
-            <input type="file" id="m-file" class="form-control" accept=".pdf" required>
-          </div>
-          <button type="submit" class="btn btn-outline"
-            style="width: 100%; justify-content: center; border-color: var(--secondary); color: var(--secondary);">Upload
-            Document</button>
-        </form>
-      </div>
-    </div>
-  </div>
+// 🔥 Load courses
+async function loadCourses() {
+  const { data } = await supabaseClient.from('courses').select('*');
 
-  <script src="assets/js/app.js"></script>
+  const select = document.getElementById('m-course');
+  select.innerHTML = '';
 
-  <!-- ✅ Supabase pehle load -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  if (!data || data.length === 0) {
+    select.innerHTML = '<option>No courses</option>';
+    return;
+  }
 
-  <!-- ✅ Supabase connect -->
-  <script>
-    const supabaseClient = window.supabase.createClient(
-      "https://iuhlwmsbmdhawavbsxes.supabase.co",
-      "sb_publishable_HLC_52FAnlzjCrsPiXNiKA_zCLMehLn"
-    );
-  </script>
+  data.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.innerText = c.title;
+    select.appendChild(opt);
+  });
+}
 
-  <!-- ✅ uske baad tera main script -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      populateCourseSelect();
+document.addEventListener('DOMContentLoaded', () => {
 
-      document.getElementById('create-course-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const title = document.getElementById('c-title').value;
-        const cat = document.getElementById('c-cat').value;
-        const instructor = document.getElementById('c-instructor').value;
-        const desc = document.getElementById('c-desc').value;
+  loadCourses();
 
-        addCourse(title, desc, instructor, cat);
-        showToast('Course created successfully!');
-        e.target.reset();
-        populateCourseSelect();
-      });
+  // ✅ Create course
+  document.getElementById('create-course-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      document.getElementById('upload-material-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    const title = document.getElementById('c-title').value;
+    const cat = document.getElementById('c-cat').value;
+    const instructor = document.getElementById('c-instructor').value;
+    const desc = document.getElementById('c-desc').value;
 
-        const courseId = document.getElementById('m-course').value;
-        const title = document.getElementById('m-title').value;
-        const fileInput = document.getElementById('m-file');
+    const { error } = await supabaseClient
+      .from('courses')
+      .insert([{ title, category: cat, instructor, description: desc }]);
 
-        if (!courseId) {
-          showToast('Please select a course first.');
-          return;
-        }
+    if (error) {
+      alert("❌ Course create failed");
+      return;
+    }
 
-        const file = fileInput.files[0];
+    alert("✅ Course created");
+    e.target.reset();
+    loadCourses();
+  });
 
-        if (!file) {
-          alert("File select kar 😅");
-          return;
-        }
+  // ✅ Upload file
+  document.getElementById('upload-material-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const filePath = "uploads/" + Date.now() + "_" + file.name;
+    const courseId = document.getElementById('m-course').value;
+    const title = document.getElementById('m-title').value;
+    const file = document.getElementById('m-file').files[0];
 
-        const { error } = await supabaseClient.storage
-          .from("files")
-          .upload(filePath, file);
+    if (!file) {
+      alert("File select kar");
+      return;
+    }
 
-        if (error) {
-          console.error(error);
-          alert("Upload failed ❌");
-          return;
-        }
+    const filePath = "uploads/" + Date.now() + "_" + file.name;
 
-        const { data } = supabaseClient
-          .storage
-          .from("files")
-          .getPublicUrl(filePath);
+    // Upload file
+    const { error } = await supabaseClient.storage
+      .from("uploads")
+      .upload(filePath, file);
 
-        const fileURL = data.publicUrl;
+    if (error) {
+      alert("❌ Upload failed");
+      return;
+    }
 
-        addMaterial(courseId, title, file.type, fileURL);
+    // Get URL
+    const { data } = supabaseClient.storage
+      .from("uploads")
+      .getPublicUrl(filePath);
 
-        showToast("Upload successful 🚀");
-        e.target.reset();
-      });
-    });
-  </script>
+    const fileURL = data.publicUrl;
+
+    // Save in DB
+    await supabaseClient.from('materials').insert([
+      { course_id: courseId, title, file_url: fileURL }
+    ]);
+
+    alert("🚀 Upload successful");
+    e.target.reset();
+  });
+
+});
+</script>
 
 </body>
-
-</html>
-
-</body>
-
 </html>
