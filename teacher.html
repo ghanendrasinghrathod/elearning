@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-material-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  alert("Upload button clicked 🚀"); // 👈 ADD THIS
   const courseId = document.getElementById('m-course').value;
   const title = document.getElementById('m-title').value;
   const file = document.getElementById('m-file').files[0];
