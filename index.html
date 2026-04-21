@@ -69,18 +69,19 @@
   <script src="assets/js/app.js"></script>
 
 
-  <!-- Firebase START -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+ <!-- Supabase START -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <script>
-const supabase = supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   "https://YOUR_PROJECT_ID.supabase.co",
   "sb_publishable_XXXXX"
 );
 
 console.log("Supabase Connected ✅");
 </script>
-  <!-- Firebase END -->
+<!-- Supabase END -->
+  
 
 </body>
 
