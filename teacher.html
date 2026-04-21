@@ -110,13 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const filePath = `${Date.now()}_${file.name}`;
-      // 🔥 FULL DEBUG UPLOAD
+
       const { data: uploadData, error: uploadError } = await supabaseClient.storage
         .from("uploads")
         .upload(filePath, file, {
           cacheControl: "3600",
           upsert: true,
-          contentType: file.type
+          contentType: "application/octet-stream"
         });
 
       console.log("UPLOAD RESULT:", uploadData, uploadError);
