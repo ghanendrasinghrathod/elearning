@@ -109,8 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const filePath = `uploads/${Date.now()}_${file.name}`;
-
+      const filePath = `${Date.now()}_${file.name}`;
       // 🔥 FULL DEBUG UPLOAD
       const { data: uploadData, error: uploadError } = await supabaseClient.storage
         .from("uploads")
