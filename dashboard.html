@@ -1,52 +1,184 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>Student Dashboard</title>
+<meta charset="UTF-8">
+<title>Student Dashboard</title>
 
-    <style>
-        body {
-            font-family: Arial;
-            background: linear-gradient(135deg, #1e1e2f, #3a0ca3);
-            color: white;
-            text-align: center;
-            padding-top: 100px;
-        }
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg,#1e1e2f,#3a0ca3);
+  color: white;
+}
 
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #7209b7;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+header {
+  padding: 20px;
+  text-align: center;
+  background: rgba(255,255,255,0.1);
+}
 
-        button:hover {
-            background: #560bad;
-        }
-    </style>
+.container {
+  padding: 20px;
+}
+
+select {
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+}
+
+.card {
+  background: rgba(255,255,255,0.1);
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+
+button {
+  padding: 8px 12px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.view { background: #4cc9f0; }
+.download { background: #7209b7; color:white; }
+.logout { background: red; color:white; }
+
+iframe {
+  width: 100%;
+  height: 400px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+</style>
 </head>
 
 <body>
 
-    <h1>Welcome Student 🎓🔥</h1>
-    <p>You are successfully logged in ✅</p>
+<header>
+  <h2>📚 Student Dashboard</h2>
+  <p id="username">Welcome 👋</p>
+  <button class="logout" onclick="logout()">Logout</button>
+</header>
 
-    <!-- 🔥 Logout Button -->
-    <button onclick="logout()">Logout</button>
+<div class="container">
 
-    <!-- 🔥 Script -->
-    <script>
-        console.log("Dashboard Loaded ✅");
+<h3>Select Course</h3>
+<select id="course-select"></select>
 
-        function logout() {
-            alert("Logged out ❌");
-            window.location.href = "index.html";
-        }
-    </script>
+<h3>Materials</h3>
+<div id="materials"></div>
+
+<h3>📄 PDF Preview</h3>
+<iframe id="viewer"></iframe>
+
+</div>
+
+<script type="module">
+
+// 🔥 Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// 🔥 Supabase
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCFS-bKBf1dyveUJd8pfCNIVVKNUeagaYA",
+  authDomain: "elerning-app-e00c6.firebaseapp.com",
+  projectId: "elerning-app-e00c6",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const supabaseClient = createClient(
+  "https://iuhlwmsbmdhawavbsxes.supabase.co",
+  "sb_publishable_4lVVKhZpkOsNL14HB4Yd2w_YNlMl8EX"
+);
+
+// 🔐 Protect page + load data
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.replace("index.html");
+  } else {
+    document.getElementById("username").innerText = "Welcome " + user.email;
+    loadCourses();
+  }
+});
+
+// 🔓 Logout
+window.logout = function () {
+  signOut(auth).then(() => {
+    window.location.replace("index.html");
+  });
+};
+
+// 🔥 Load courses
+async function loadCourses() {
+  const { data } = await supabaseClient.from('courses').select('*');
+
+  const select = document.getElementById('course-select');
+  select.innerHTML = '<option value="">Select Course</option>';
+
+  data.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.title;
+    select.appendChild(opt);
+  });
+}
+
+// 🔥 Load materials
+async function loadMaterials(courseId) {
+  const { data } = await supabaseClient
+    .from('materials')
+    .select('*')
+    .eq('course_id', courseId);
+
+  const container = document.getElementById('materials');
+  container.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    container.innerHTML = "No materials ❌";
+    return;
+  }
+
+  data.forEach(m => {
+    const div = document.createElement('div');
+    div.className = "card";
+
+    div.innerHTML = `
+      <h4>${m.title}</h4>
+
+      <button class="view" onclick="viewPDF('${m.file_url}')">
+        👁 View
+      </button>
+
+      <a href="${m.file_url}" download>
+        <button class="download">⬇ Download</button>
+      </a>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+// 🎯 Course change
+document.getElementById('course-select').addEventListener('change', (e) => {
+  loadMaterials(e.target.value);
+});
+
+// 🔥 PDF viewer
+window.viewPDF = function(url) {
+  document.getElementById('viewer').src = url;
+};
+
+</script>
 
 </body>
-
 </html>
