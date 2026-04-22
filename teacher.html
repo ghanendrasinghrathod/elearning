@@ -1,151 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher Portal</title>
+<meta charset="UTF-8">
+<title>Teacher Panel</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg,#1e1e2f,#3a0ca3);
+  color: white;
+}
+
+/* login */
+.login-box {
+  height: 100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.box {
+  background: rgba(255,255,255,0.1);
+  padding: 30px;
+  border-radius: 10px;
+  width: 300px;
+  text-align:center;
+}
+
+input {
+  width:100%;
+  padding:10px;
+  margin:10px 0;
+  border:none;
+  border-radius:5px;
+}
+
+button {
+  padding:10px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  width:100%;
+  margin-top:10px;
+}
+
+.login { background:#7209b7; color:white; }
+
+/* panel */
+header {
+  padding:20px;
+  text-align:center;
+  background:rgba(255,255,255,0.1);
+}
+
+.container {
+  padding:20px;
+  max-width:600px;
+  margin:auto;
+}
+
+.card {
+  background:rgba(255,255,255,0.1);
+  padding:15px;
+  margin:15px 0;
+  border-radius:10px;
+}
+
+.create { background:#4cc9f0; }
+.upload { background:#7209b7; color:white; }
+.delete { background:red; color:white; }
+.logout { background:orange; }
+</style>
 </head>
 
 <body>
 
-<h2>Create Course</h2>
-<form id="create-course-form">
-  <input type="text" id="c-title" placeholder="Course Title" required>
-  <input type="text" id="c-cat" placeholder="Category" required>
-  <input type="text" id="c-instructor" placeholder="Instructor" required>
-  <textarea id="c-desc" placeholder="Description"></textarea>
-  <button type="submit">Create Course</button>
-</form>
+<!-- 🔐 LOGIN UI -->
+<div id="login-section" class="login-box">
+  <div class="box">
+    <h2>Teacher Login</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button class="login" onclick="login()">Login</button>
+  </div>
+</div>
 
-<hr>
+<!-- 👨‍🏫 PANEL UI -->
+<div id="panel" style="display:none;">
 
-<h2>Upload Material</h2>
-<form id="upload-material-form">
-  <select id="m-course">
-    <option value="">Select Course</option>
-  </select>
-  <input type="text" id="m-title" placeholder="File Title" required>
-  <input type="file" id="m-file" required>
-  <button type="submit">Upload</button>
-</form>
+<header>
+  <h2>👨‍🏫 Teacher Panel</h2>
+  <button class="logout" onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>Create Course</h3>
+<input type="text" id="c-title" placeholder="Course Title">
+<input type="text" id="c-cat" placeholder="Category">
+<input type="text" id="c-instructor" placeholder="Instructor">
+<textarea id="c-desc" placeholder="Description"></textarea>
+<button class="create" onclick="createCourse()">Create</button>
+</div>
+
+<div class="card">
+<h3>Upload Material</h3>
+<select id="m-course"></select>
+<input type="text" id="m-title" placeholder="File Title">
+<input type="file" id="m-file">
+<button class="upload" onclick="uploadFile()">Upload</button>
+</div>
+
+<div class="card">
+<h3>All Courses</h3>
+<div id="course-list"></div>
+</div>
+
+</div>
+</div>
 
 <script type="module">
+
+// 🔥 Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// 🔥 Supabase
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCFS-bKBf1dyveUJd8pfCNIVVKNUeagaYA",
+  authDomain: "elerning-app-e00c6.firebaseapp.com",
+  projectId: "elerning-app-e00c6",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 const supabaseClient = createClient(
   "https://iuhlwmsbmdhawavbsxes.supabase.co",
   "sb_publishable_4lVVKhZpkOsNL14HB4Yd2w_YNlMl8EX"
 );
 
+// 🔐 login
+window.login = function () {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => alert("Login Success ✅"))
+    .catch(err => alert(err.message));
+};
+
+// 🔐 auto login check
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById("login-section").style.display = "none";
+    document.getElementById("panel").style.display = "block";
+    loadCourses();
+  }
+});
+
+// 🔓 logout
+window.logout = function () {
+  signOut(auth).then(() => location.reload());
+};
+
 // 🔥 Load courses
 async function loadCourses() {
-  const { data, error } = await supabaseClient.from('courses').select('*');
+  const { data } = await supabaseClient.from('courses').select('*');
 
   const select = document.getElementById('m-course');
-  select.innerHTML = '<option value="">Select Course</option>';
+  const list = document.getElementById('course-list');
 
-  if (error) {
-    alert("Courses load error");
-    return;
-  }
+  select.innerHTML = '';
+  list.innerHTML = '';
 
   data.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c.id;
     opt.textContent = c.title;
     select.appendChild(opt);
+
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <p>${c.title}</p>
+      <button class="delete" onclick="deleteCourse(${c.id})">Delete</button>
+      <hr>
+    `;
+    list.appendChild(div);
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// create
+window.createCourse = async function() {
+  const title = document.getElementById('c-title').value;
+  const cat = document.getElementById('c-cat').value;
+  const instructor = document.getElementById('c-instructor').value;
+  const desc = document.getElementById('c-desc').value;
 
+  await supabaseClient.from('courses').insert([
+    { title, category: cat, instructor, description: desc }
+  ]);
+
+  alert("Course Created ✅");
   loadCourses();
+};
 
-  // ✅ Create course
-  document.getElementById('create-course-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// upload
+window.uploadFile = async function() {
+  const courseId = document.getElementById('m-course').value;
+  const title = document.getElementById('m-title').value;
+  const file = document.getElementById('m-file').files[0];
 
-    const title = c-title.value;
-    const cat = c-cat.value;
-    const instructor = c-instructor.value;
-    const desc = c-desc.value;
+  const filePath = `${Date.now()}_${file.name}`;
 
-    const { error } = await supabaseClient
-      .from('courses')
-      .insert([{ title, category: cat, instructor, description: desc }]);
+  await supabaseClient.storage.from("uploads").upload(filePath, file);
 
-    if (error) {
-      alert("❌ Course create failed: " + error.message);
-      return;
-    }
+  const { data } = supabaseClient.storage
+    .from("uploads")
+    .getPublicUrl(filePath);
 
-    alert("✅ Course created");
-    e.target.reset();
-    loadCourses();
-  });
+  await supabaseClient.from('materials').insert([
+    { course_id: courseId, title, file_url: data.publicUrl }
+  ]);
 
-  // ✅ Upload file
-  document.getElementById('upload-material-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  alert("Uploaded ✅");
+};
 
-    const courseId = document.getElementById('m-course').value;
-    const title = document.getElementById('m-title').value;
-    const file = document.getElementById('m-file').files[0];
+// delete
+window.deleteCourse = async function(id) {
+  await supabaseClient.from('courses').delete().eq('id', id);
+  alert("Deleted ❌");
+  loadCourses();
+};
 
-    if (!courseId) {
-      alert("Course select kar ❌");
-      return;
-    }
-
-    if (!file) {
-      alert("File select kar ❌");
-      return;
-    }
-
-    try {
-      const filePath = `${Date.now()}_${file.name}`;
-
-      console.log("Uploading...");
-
-      const { data, error } = await supabaseClient.storage
-        .from("uploads")
-        .upload(filePath, file, {
-          upsert: true,
-          contentType: file.type || "application/octet-stream"
-        });
-
-      if (error) {
-        alert("❌ Upload failed: " + error.message);
-        return;
-      }
-
-      const { data: publicUrlData } = supabaseClient.storage
-        .from("uploads")
-        .getPublicUrl(filePath);
-
-      const fileURL = publicUrlData.publicUrl;
-
-      const { error: dbError } = await supabaseClient
-        .from('materials')
-        .insert([
-          { course_id: courseId, title, file_url: fileURL }
-        ]);
-
-      if (dbError) {
-        alert("❌ DB save failed: " + dbError.message);
-        return;
-      }
-
-      alert("🚀 Upload successful");
-      e.target.reset();
-
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong ❌");
-    }
-  });
-
-});
 </script>
 
 </body>
