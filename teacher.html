@@ -28,7 +28,7 @@ body {
   text-align:center;
 }
 
-input {
+input, textarea, select {
   width:100%;
   padding:10px;
   margin:10px 0;
@@ -76,7 +76,7 @@ header {
 
 <body>
 
-<!-- 🔐 LOGIN UI -->
+<!-- LOGIN -->
 <div id="login-section" class="login-box">
   <div class="box">
     <h2>Teacher Login</h2>
@@ -86,7 +86,7 @@ header {
   </div>
 </div>
 
-<!-- 👨‍🏫 PANEL UI -->
+<!-- PANEL -->
 <div id="panel" style="display:none;">
 
 <header>
@@ -123,16 +123,12 @@ header {
 
 <script type="module">
 
-// 🔥 Firebase
+// Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// 🔥 Supabase
+// Supabase
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 const firebaseConfig = {
@@ -149,17 +145,24 @@ const supabaseClient = createClient(
   "sb_publishable_4lVVKhZpkOsNL14HB4Yd2w_YNlMl8EX"
 );
 
-// 🔐 login
+// LOGIN
 window.login = function () {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
   signInWithEmailAndPassword(auth, email, password)
-    .then(() => alert("Login Success ✅"))
+    .then(() => {
+      alert("Login Success ✅");
+
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("panel").style.display = "block";
+
+      loadCourses();
+    })
     .catch(err => alert(err.message));
 };
 
-// 🔐 auto login check
+// AUTO LOGIN
 onAuthStateChanged(auth, (user) => {
   if (user) {
     document.getElementById("login-section").style.display = "none";
@@ -168,12 +171,12 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// 🔓 logout
+// LOGOUT
 window.logout = function () {
   signOut(auth).then(() => location.reload());
 };
 
-// 🔥 Load courses
+// LOAD COURSES
 async function loadCourses() {
   const { data } = await supabaseClient.from('courses').select('*');
 
@@ -199,7 +202,7 @@ async function loadCourses() {
   });
 }
 
-// create
+// CREATE
 window.createCourse = async function() {
   const title = document.getElementById('c-title').value;
   const cat = document.getElementById('c-cat').value;
@@ -214,28 +217,44 @@ window.createCourse = async function() {
   loadCourses();
 };
 
-// upload
+// UPLOAD
 window.uploadFile = async function() {
-  const courseId = document.getElementById('m-course').value;
-  const title = document.getElementById('m-title').value;
-  const file = document.getElementById('m-file').files[0];
+  try {
+    const courseId = document.getElementById('m-course').value;
+    const title = document.getElementById('m-title').value;
+    const file = document.getElementById('m-file').files[0];
 
-  const filePath = `${Date.now()}_${file.name}`;
+    if (!file) {
+      alert("File select kar ❌");
+      return;
+    }
 
-  await supabaseClient.storage.from("uploads").upload(filePath, file);
+    const filePath = `${Date.now()}_${file.name}`;
 
-  const { data } = supabaseClient.storage
-    .from("uploads")
-    .getPublicUrl(filePath);
+    const { error } = await supabaseClient.storage
+      .from("uploads")
+      .upload(filePath, file);
 
-  await supabaseClient.from('materials').insert([
-    { course_id: courseId, title, file_url: data.publicUrl }
-  ]);
+    if (error) {
+      alert("Upload failed ❌");
+      return;
+    }
 
-  alert("Uploaded ✅");
+    const { data } = supabaseClient.storage
+      .from("uploads")
+      .getPublicUrl(filePath);
+
+    await supabaseClient.from('materials').insert([
+      { course_id: courseId, title, file_url: data.publicUrl }
+    ]);
+
+    alert("Uploaded ✅");
+  } catch {
+    alert("Error ❌");
+  }
 };
 
-// delete
+// DELETE
 window.deleteCourse = async function(id) {
   await supabaseClient.from('courses').delete().eq('id', id);
   alert("Deleted ❌");
