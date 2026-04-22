@@ -1,5 +1,5 @@
 
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -120,7 +120,6 @@ header {
 </div>
 </div>
 
-<!-- Supabase -->
 <script type="module">
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -135,10 +134,7 @@ window.login = async function () {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
-  });
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
   if (error) {
     alert(error.message);
@@ -146,7 +142,6 @@ window.login = async function () {
   }
 
   alert("Login Success ✅");
-
   document.getElementById("login-section").style.display = "none";
   document.getElementById("panel").style.display = "block";
 
@@ -171,7 +166,7 @@ window.logout = async function () {
   location.reload();
 };
 
-// LOAD COURSES
+// LOAD COURSES (FIXED DELETE BUTTON)
 async function loadCourses() {
   const { data } = await supabaseClient.from('courses').select('*');
 
@@ -182,17 +177,20 @@ async function loadCourses() {
   list.innerHTML = '';
 
   data.forEach(c => {
+
     const opt = document.createElement('option');
     opt.value = c.id;
     opt.textContent = c.title;
     select.appendChild(opt);
 
     const div = document.createElement('div');
+
     div.innerHTML = `
       <p>${c.title}</p>
-      <button class="delete" onclick="deleteCourse(${c.id})">Delete</button>
+      <button class="delete" onclick="deleteCourse('${c.id}')">Delete</button>
       <hr>
     `;
+
     list.appendChild(div);
   });
 }
@@ -225,13 +223,9 @@ window.uploadFile = async function() {
 
   const filePath = `${Date.now()}_${file.name}`;
 
-  await supabaseClient.storage
-    .from("uploads")
-    .upload(filePath, file);
+  await supabaseClient.storage.from("uploads").upload(filePath, file);
 
-  const { data } = supabaseClient.storage
-    .from("uploads")
-    .getPublicUrl(filePath);
+  const { data } = supabaseClient.storage.from("uploads").getPublicUrl(filePath);
 
   await supabaseClient.from('materials').insert([
     { course_id: courseId, title, file_url: data.publicUrl }
@@ -240,10 +234,23 @@ window.uploadFile = async function() {
   alert("Uploaded ✅");
 };
 
-// DELETE
+// DELETE (FIXED)
 window.deleteCourse = async function(id) {
-  await supabaseClient.from('courses').delete().eq('id', id);
-  alert("Deleted ❌");
+
+  console.log("Deleting:", id);
+
+  const { error } = await supabaseClient
+    .from('courses')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error(error);
+    alert("Delete failed ❌");
+    return;
+  }
+
+  alert("Deleted ✅");
   loadCourses();
 };
 
