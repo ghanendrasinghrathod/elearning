@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -147,20 +148,33 @@ const supabaseClient = createClient(
 const teachers = ["teacher@gmail.com"];
 
 // LOGIN
-window.login = function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+window.login = async function () {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  console.log("Login try:", email);
 
   if (!teachers.includes(email)) {
     alert("Only Teacher Allowed ❌");
     return;
   }
 
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      alert("Login Success ✅");
-    })
-    .catch(err => alert(err.message));
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("Login Success ✅");
+  } catch (err) {
+    console.error(err);
+
+    if (err.code === "auth/wrong-password") {
+      alert("Wrong Password ❌");
+    } else if (err.code === "auth/user-not-found") {
+      alert("User not found ❌");
+    } else if (err.code === "auth/invalid-credential") {
+      alert("Email/Password mismatch ❌");
+    } else {
+      alert(err.message);
+    }
+  }
 };
 
 // AUTO LOGIN
