@@ -1,5 +1,5 @@
 
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -120,66 +120,42 @@ header {
 </div>
 </div>
 
+<!-- Supabase -->
 <script type="module">
 
-// Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-// Supabase
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCFS-bKBf1dyveUJd8pfCNIVVKNUeagaYA",
-  authDomain: "elerning-app-e00c6.firebaseapp.com",
-  projectId: "elerning-app-e00c6",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 const supabaseClient = createClient(
   "https://iuhlwmsbmdhawavbsxes.supabase.co",
   "sb_publishable_4lVVKhZpkOsNL14HB4Yd2w_YNlMl8EX"
 );
 
-// 🔥 Allowed teachers
-const teachers = ["teacher@gmail.com"];
-
 // LOGIN
 window.login = async function () {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-  console.log("Login try:", email);
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
 
-  if (!teachers.includes(email)) {
-    alert("Only Teacher Allowed ❌");
+  if (error) {
+    alert(error.message);
     return;
   }
 
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    alert("Login Success ✅");
-  } catch (err) {
-    console.error(err);
+  alert("Login Success ✅");
 
-    if (err.code === "auth/wrong-password") {
-      alert("Wrong Password ❌");
-    } else if (err.code === "auth/user-not-found") {
-      alert("User not found ❌");
-    } else if (err.code === "auth/invalid-credential") {
-      alert("Email/Password mismatch ❌");
-    } else {
-      alert(err.message);
-    }
-  }
+  document.getElementById("login-section").style.display = "none";
+  document.getElementById("panel").style.display = "block";
+
+  loadCourses();
 };
 
 // AUTO LOGIN
-onAuthStateChanged(auth, (user) => {
-  if (user && teachers.includes(user.email)) {
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (session) {
     document.getElementById("login-section").style.display = "none";
     document.getElementById("panel").style.display = "block";
     loadCourses();
@@ -190,8 +166,9 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // LOGOUT
-window.logout = function () {
-  signOut(auth).then(() => location.reload());
+window.logout = async function () {
+  await supabaseClient.auth.signOut();
+  location.reload();
 };
 
 // LOAD COURSES
@@ -237,39 +214,30 @@ window.createCourse = async function() {
 
 // UPLOAD
 window.uploadFile = async function() {
-  try {
-    const courseId = document.getElementById('m-course').value;
-    const title = document.getElementById('m-title').value;
-    const file = document.getElementById('m-file').files[0];
+  const courseId = document.getElementById('m-course').value;
+  const title = document.getElementById('m-title').value;
+  const file = document.getElementById('m-file').files[0];
 
-    if (!file) {
-      alert("File select kar ❌");
-      return;
-    }
-
-    const filePath = `${Date.now()}_${file.name}`;
-
-    const { error } = await supabaseClient.storage
-      .from("uploads")
-      .upload(filePath, file);
-
-    if (error) {
-      alert("Upload failed ❌");
-      return;
-    }
-
-    const { data } = supabaseClient.storage
-      .from("uploads")
-      .getPublicUrl(filePath);
-
-    await supabaseClient.from('materials').insert([
-      { course_id: courseId, title, file_url: data.publicUrl }
-    ]);
-
-    alert("Uploaded ✅");
-  } catch {
-    alert("Error ❌");
+  if (!file) {
+    alert("File select kar ❌");
+    return;
   }
+
+  const filePath = `${Date.now()}_${file.name}`;
+
+  await supabaseClient.storage
+    .from("uploads")
+    .upload(filePath, file);
+
+  const { data } = supabaseClient.storage
+    .from("uploads")
+    .getPublicUrl(filePath);
+
+  await supabaseClient.from('materials').insert([
+    { course_id: courseId, title, file_url: data.publicUrl }
+  ]);
+
+  alert("Uploaded ✅");
 };
 
 // DELETE
