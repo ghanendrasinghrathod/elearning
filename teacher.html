@@ -164,11 +164,12 @@ window.login = function () {
 
 // AUTO LOGIN
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    document.getElementById("login-section").style.display = "none";
-    document.getElementById("panel").style.display = "block";
-    loadCourses();
-  }
+
+  // 🔥 always show login first
+  document.getElementById("login-section").style.display = "flex";
+  document.getElementById("panel").style.display = "none";
+
+
 });
 
 // LOGOUT
