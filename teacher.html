@@ -12,7 +12,6 @@ body {
   color: white;
 }
 
-/* login */
 .login-box {
   height: 100vh;
   display:flex;
@@ -47,7 +46,6 @@ button {
 
 .login { background:#7209b7; color:white; }
 
-/* panel */
 header {
   padding:20px;
   text-align:center;
@@ -145,31 +143,36 @@ const supabaseClient = createClient(
   "sb_publishable_4lVVKhZpkOsNL14HB4Yd2w_YNlMl8EX"
 );
 
+// 🔥 Allowed teachers
+const teachers = ["teacher@gmail.com"];
+
 // LOGIN
 window.login = function () {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
+  if (!teachers.includes(email)) {
+    alert("Only Teacher Allowed ❌");
+    return;
+  }
+
   signInWithEmailAndPassword(auth, email, password)
     .then(() => {
       alert("Login Success ✅");
-
-      document.getElementById("login-section").style.display = "none";
-      document.getElementById("panel").style.display = "block";
-
-      loadCourses();
     })
     .catch(err => alert(err.message));
 };
 
 // AUTO LOGIN
 onAuthStateChanged(auth, (user) => {
-
-  // 🔥 always show login first
-  document.getElementById("login-section").style.display = "flex";
-  document.getElementById("panel").style.display = "none";
-
-
+  if (user && teachers.includes(user.email)) {
+    document.getElementById("login-section").style.display = "none";
+    document.getElementById("panel").style.display = "block";
+    loadCourses();
+  } else {
+    document.getElementById("login-section").style.display = "flex";
+    document.getElementById("panel").style.display = "none";
+  }
 });
 
 // LOGOUT
